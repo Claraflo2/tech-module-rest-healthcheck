@@ -51,4 +51,11 @@
         <jiraProjectName>RESTHEALTHCHECK</jiraProjectName>
         <jiraComponentId></jiraComponentId>
     </properties>
+
+    <scm>
+        <connection>scm:git:https://github.com/lutece-platform/tech-module-rest-healthcheck.git</connection>
+        <developerConnection>scm:git:https://github.com/lutece-platform/tech-module-rest-healthcheck.git</developerConnection>
+        <url>https://github.com/lutece-platform/tech-module-rest-healthcheck.git</url>
+    </scm>
+
 </project>
