@@ -34,36 +34,47 @@
 package fr.paris.lutece.plugins.rest.modules.healthcheck.business.impl;
 
 import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadMXBean;
-import java.lang.management.OperatingSystemMXBean;
+
+import java.lang.management.MemoryMXBean;
 
 import org.eclipse.microprofile.health.HealthCheck;
 import org.eclipse.microprofile.health.HealthCheckResponse;
 import org.eclipse.microprofile.health.Liveness;
 
 @Liveness
-public class CpuUsageCheck implements HealthCheck
+public class MemoryJVMUsageCheck implements HealthCheck
 {
-	private static double CPU_MAX = 0.95;
-
+	private static double MEMORY_MAX = 0.9;
+	
     @Override
     public HealthCheckResponse call( )
     {
-
-        OperatingSystemMXBean bean = (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean( );
+        MemoryMXBean memBean = ManagementFactory.getMemoryMXBean( );
         
-      //Percent of cpu used by host.
-        double cpuUsed = ((com.sun.management.OperatingSystemMXBean) bean).getSystemCpuLoad();
-        boolean isHealthy = cpuUsed<CPU_MAX;
+       
+        //Memory heap
+        
+        long memHeapUsed = memBean.getHeapMemoryUsage( ).getUsed( ); //Memory heap used by JVM
+        long memHeapMax = memBean.getHeapMemoryUsage( ).getMax( );   //Total memory available for JVM heap memory
+        boolean isHeapHealthy = memHeapUsed < memHeapMax * 0.9; //Test if memory used is lower than 90% of total memory 
+        
+        //Memory no heap
+        long memNoHeapUsed = memBean.getNonHeapMemoryUsage().getUsed(); //Memory No heap used by JVM
+        long memNoHeapMax = memBean.getNonHeapMemoryUsage().getMax(); ////Total memory available for JVM No heap memory
+        
+        boolean isNoHeapHealthy = true;
+        // -1 means no limit is set for no heap memory
+        if(memNoHeapMax!=-1) {
+        	isNoHeapHealthy=memNoHeapUsed < memNoHeapMax * MEMORY_MAX; //Check if no heap memory is not used at more than 90% of its capacity
+        }
+        
+        boolean isHealthy =  isHeapHealthy & isNoHeapHealthy;
         
         StringBuilder sb = new StringBuilder( );
-
-        // Temps CPU total utilisé par les threads de la JVM
         
-        return HealthCheckResponse.named( "Host CPU usage Check" )
-        		.status( isHealthy )
-        		.withData( "message", sb.append("CPU usage : ").append(String.format("%.1f",cpuUsed*100)).append(" %").toString( ) )
-        		.build( );
+        return HealthCheckResponse.named( "Memory JVM Check" ).status( isHealthy )
+                .withData( "message", sb.append("Memory available (b) : ").append( (memHeapMax-memHeapUsed) ).append( " / " ).append( memHeapMax ).toString( ) )
+                .build( );
     }
 
 }

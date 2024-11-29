@@ -42,7 +42,7 @@ import org.eclipse.microprofile.health.HealthCheckResponse;
 import org.eclipse.microprofile.health.Liveness;
 
 @Liveness
-public class CpuUsageCheck implements HealthCheck
+public class CpuJVMUsageCheck implements HealthCheck
 {
 	private static double CPU_MAX = 0.95;
 
@@ -51,16 +51,14 @@ public class CpuUsageCheck implements HealthCheck
     {
 
         OperatingSystemMXBean bean = (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean( );
-        
-      //Percent of cpu used by host.
-        double cpuUsed = ((com.sun.management.OperatingSystemMXBean) bean).getSystemCpuLoad();
+
+        //Percent of cpu used by jvm.
+        double cpuUsed = ((com.sun.management.OperatingSystemMXBean) bean).getProcessCpuLoad();
         boolean isHealthy = cpuUsed<CPU_MAX;
         
         StringBuilder sb = new StringBuilder( );
-
-        // Temps CPU total utilisé par les threads de la JVM
         
-        return HealthCheckResponse.named( "Host CPU usage Check" )
+        return HealthCheckResponse.named( "JVM CPU usage Check" )
         		.status( isHealthy )
         		.withData( "message", sb.append("CPU usage : ").append(String.format("%.1f",cpuUsed*100)).append(" %").toString( ) )
         		.build( );
